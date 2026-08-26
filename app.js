@@ -1,0 +1,10 @@
+const EMG_THRESHOLD=65;let emgPercent=0,reps=0,lastCVRep=false;
+const tracker=new ExerciseTracker(),video=document.getElementById("camera"),canvas=document.getElementById("overlay"),ctx=canvas.getContext("2d");
+const $=id=>document.getElementById(id);
+function update(){ $("emg").textContent=Math.round(emgPercent)+"%";$("reps").textContent=reps}
+function validate(r){if(!r)return;$("form").textContent=r.formMessage;$("message").textContent=r.repDetected?(r.formOK&&emgPercent>=EMG_THRESHOLD?"VALID REP — CV + EMG passed":"REP REJECTED — EMG below threshold"):"Tracking...";
+if(r.repDetected&&!lastCVRep&&r.formOK&&emgPercent>=EMG_THRESHOLD){reps++;update()}lastCVRep=r.repDetected}
+$("workoutSelect").onchange=e=>{tracker.setExercise(e.target.value);$("workout").textContent=e.target.options[e.target.selectedIndex].text;reps=0;lastCVRep=false;update()};
+$("cameraBtn").onclick=async()=>{try{video.srcObject=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:640},height:{ideal:480}},audio:false});await video.play();$("message").textContent="Camera active — tracking...";startPose()}catch(e){$("message").textContent="Camera error: "+e.message}};
+function startPose(){const pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});pose.setOptions({modelComplexity:1,smoothLandmarks:true,enableSegmentation:false,minDetectionConfidence:.6,minTrackingConfidence:.6});pose.onResults(r=>{canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;ctx.clearRect(0,0,canvas.width,canvas.height);if(r.poseLandmarks){ctx.fillStyle="#00ff88";r.poseLandmarks.forEach(p=>{if((p.visibility??1)>=.35){ctx.beginPath();ctx.arc(p.x*canvas.width,p.y*canvas.height,3,0,Math.PI*2);ctx.fill()}});validate(tracker.process(r.poseLandmarks))}});(async function loop(){if(video.readyState>=2)await pose.send({image:video});requestAnimationFrame(loop)})()}
+window.onEMGUpdate=p=>{emgPercent=Math.max(0,Math.min(100,Number(p)||0));update()};update();

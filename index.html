@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Fitness Dashboard</title><link rel="stylesheet" href="style.css">
+</head><body><main>
+<h1>Smart Fitness Dashboard</h1>
+<section class="grid">
+<div class="card">Workout<strong id="workout">Bicep Curl</strong></div>
+<div class="card">CV Form<strong id="form">WAITING</strong></div>
+<div class="card">EMG<strong id="emg">0%</strong></div>
+<div class="card">Valid Reps<strong id="reps">0</strong></div>
+</section>
+<section class="video-wrap"><video id="camera" autoplay muted playsinline></video>
+<canvas id="overlay"></canvas><div id="message">Start camera to begin.</div></section>
+<div class="controls"><button id="cameraBtn">Start Camera</button>
+<select id="workoutSelect"><option value="bicep">Bicep Curl</option><option value="squat">Squat</option><option value="pushup">Pushup</option></select></div>
+<p class="rule">Rep = CV rep + correct form + EMG ≥ 65%.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+<script src="cv/exercise-tracker.js"></script><script src="app.js"></script>
+</body></html>
