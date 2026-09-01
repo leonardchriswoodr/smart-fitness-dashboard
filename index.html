@@ -1,21 +1,966 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Smart Fitness Dashboard</title><link rel="stylesheet" href="style.css">
-</head><body><main>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Smart Fitness Dashboard</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+
+<body>
+
+<main>
+
 <h1>Smart Fitness Dashboard</h1>
+
+
+<!-- ================================================= -->
+<!-- STATUS / DATA CARDS -->
+<!-- ================================================= -->
+
 <section class="grid">
-<div class="card">Workout<strong id="workout">Bicep Curl</strong></div>
-<div class="card">CV Form<strong id="form">WAITING</strong></div>
-<div class="card">EMG<strong id="emg">0%</strong></div>
-<div class="card">Valid Reps<strong id="reps">0</strong></div>
+
+<div class="card">
+Workout
+<strong id="workout">Pushups</strong>
+</div>
+
+
+<div class="card">
+CV Form
+<strong id="form">WAITING</strong>
+</div>
+
+
+<div class="card">
+EMG
+<strong id="emg">0%</strong>
+</div>
+
+
+<div class="card">
+Valid Reps
+<strong id="reps">0</strong>
+</div>
+
+
+<div class="card">
+Wearable
+<strong id="wearableStatus">DISCONNECTED</strong>
+</div>
+
 </section>
-<section class="video-wrap"><video id="camera" autoplay muted playsinline></video>
-<canvas id="overlay"></canvas><div id="message">Start camera to begin.</div></section>
-<div class="controls"><button id="cameraBtn">Start Camera</button>
-<select id="workoutSelect"><option value="bicep">Bicep Curl</option><option value="squat">Squat</option><option value="pushup">Pushup</option></select></div>
-<p class="rule">Rep = CV rep + correct form + EMG ≥ 65%.</p>
+
+
+<!-- ================================================= -->
+<!-- CAMERA -->
+<!-- ================================================= -->
+
+<section class="video-wrap">
+
+<video
+id="camera"
+autoplay
+muted
+playsinline>
+</video>
+
+
+<canvas
+id="overlay">
+</canvas>
+
+
+<div id="message">
+Connect wearable and start camera to begin.
+</div>
+
+</section>
+
+
+<!-- ================================================= -->
+<!-- CONTROLS -->
+<!-- ================================================= -->
+
+<div class="controls">
+
+
+<!-- WAVESHARE BLE -->
+
+<button id="bleBtn">
+Connect Wearable
+</button>
+
+
+<!-- CAMERA -->
+
+<button id="cameraBtn">
+Start Camera
+</button>
+
+
+<!-- WORKOUT -->
+
+<select id="workoutSelect">
+
+
+<!-- CHEST -->
+
+<option value="PUSHUPS">
+Pushups
+</option>
+
+<option value="CHEST FLY">
+Chest Fly
+</option>
+
+<option value="CHEST DIPS">
+Chest Dips
+</option>
+
+<option value="BENCH PRESS">
+Bench Press
+</option>
+
+
+<!-- SHOULDERS -->
+
+<option value="SHOULDER PRESS">
+Shoulder Press
+</option>
+
+<option value="LATERAL RAISES">
+Lateral Raises
+</option>
+
+<option value="FRONT RAISES">
+Front Raises
+</option>
+
+
+<!-- ARMS -->
+
+<option value="BICEP CURLS">
+Bicep Curls
+</option>
+
+<option value="TRICEP EXTENSIONS">
+Tricep Extensions
+</option>
+
+<option value="HAMMER CURLS">
+Hammer Curls
+</option>
+
+
+<!-- BACK -->
+
+<option value="DEADLIFT">
+Deadlift
+</option>
+
+<option value="LAT PULLDOWNS">
+Lat Pulldowns
+</option>
+
+<option value="PULL-UPS">
+Pull-ups
+</option>
+
+
+<!-- LEGS -->
+
+<option value="SQUATS">
+Squats
+</option>
+
+<option value="LEG EXTENSIONS">
+Leg Extensions
+</option>
+
+<option value="LEG PRESS">
+Leg Press
+</option>
+
+
+<!-- ABS -->
+
+<option value="CRUNCHES">
+Crunches
+</option>
+
+<option value="LEG RAISES">
+Leg Raises
+</option>
+
+<option value="RUSSIAN TWIST">
+Russian Twist
+</option>
+
+
+</select>
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- BLE INFORMATION -->
+<!-- ================================================= -->
+
+<section class="card">
+
+<div>
+Wearable:
+<strong id="wearableName">
+Not connected
+</strong>
+</div>
+
+
+<div>
+Sensor:
+<strong id="sensorStatus">
+DISCONNECTED
+</strong>
+</div>
+
+
+<div>
+EMG:
+<strong id="emgRaw">
+0
+</strong>
+</div>
+
+</section>
+
+
+<!-- ================================================= -->
+<!-- REP RULE -->
+<!-- ================================================= -->
+
+<p class="rule">
+Rep = CV rep + correct form + EMG ≥ 65%.
+</p>
+
+
 </main>
+
+
+<!-- ================================================= -->
+<!-- MEDIAPIPE -->
+<!-- ================================================= -->
+
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
-<script src="cv/exercise-tracker.js"></script><script src="app.js"></script>
-</body></html>
+
+
+<!-- ================================================= -->
+<!-- EXISTING EXERCISE TRACKER -->
+<!-- ================================================= -->
+
+<script src="cv/exercise-tracker.js"></script>
+
+
+<!-- ================================================= -->
+<!-- WAVESHARE BLE -->
+<!-- ================================================= -->
+
+<script>
+
+
+// =====================================================
+// WAVESHARE BLE CONFIGURATION
+// =====================================================
+
+const WAVESHARE_NAME =
+"WAVESHARE_EMG";
+
+
+const WAVESHARE_SERVICE =
+"6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+
+
+const WAVESHARE_CHARACTERISTIC =
+"6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+
+
+// =====================================================
+// BLE VARIABLES
+// =====================================================
+
+let wearableDevice =
+null;
+
+
+let wearableServer =
+null;
+
+
+let wearableCharacteristic =
+null;
+
+
+let wearableConnected =
+false;
+
+
+// =====================================================
+// ELEMENTS
+// =====================================================
+
+const bleBtn =
+document.getElementById("bleBtn");
+
+
+const wearableStatus =
+document.getElementById("wearableStatus");
+
+
+const wearableName =
+document.getElementById("wearableName");
+
+
+const sensorStatus =
+document.getElementById("sensorStatus");
+
+
+const emgDisplay =
+document.getElementById("emg");
+
+
+const emgRawDisplay =
+document.getElementById("emgRaw");
+
+
+const workoutDisplay =
+document.getElementById("workout");
+
+
+const workoutSelect =
+document.getElementById("workoutSelect");
+
+
+const message =
+document.getElementById("message");
+
+
+// =====================================================
+// CHECK WEB BLUETOOTH
+// =====================================================
+
+if (!("bluetooth" in navigator)) {
+
+console.warn(
+"Web Bluetooth is not supported by this browser."
+);
+
+bleBtn.disabled =
+true;
+
+bleBtn.textContent =
+"Bluetooth Not Supported";
+
+}
+
+
+// =====================================================
+// CONNECT WEARABLE
+// =====================================================
+
+bleBtn.addEventListener(
+"click",
+connectWearable
+);
+
+
+async function connectWearable() {
+
+try {
+
+
+// -----------------------------------------------------
+// UI
+// -----------------------------------------------------
+
+bleBtn.disabled =
+true;
+
+bleBtn.textContent =
+"Searching...";
+
+
+wearableStatus.textContent =
+"SEARCHING";
+
+
+message.textContent =
+"Searching for WAVESHARE_EMG...";
+
+
+// -----------------------------------------------------
+// REQUEST DEVICE
+// -----------------------------------------------------
+
+wearableDevice =
+await navigator.bluetooth.requestDevice({
+
+filters: [
+
+{
+name: WAVESHARE_NAME
+}
+
+],
+
+optionalServices: [
+
+WAVESHARE_SERVICE
+
+]
+
+});
+
+
+// -----------------------------------------------------
+// DEVICE FOUND
+// -----------------------------------------------------
+
+console.log(
+"Wearable found:",
+wearableDevice.name
+);
+
+
+wearableName.textContent =
+wearableDevice.name ||
+WAVESHARE_NAME;
+
+
+bleBtn.textContent =
+"Connecting...";
+
+
+wearableStatus.textContent =
+"CONNECTING";
+
+
+message.textContent =
+"Connecting to wearable...";
+
+
+// -----------------------------------------------------
+// DISCONNECT HANDLER
+// -----------------------------------------------------
+
+wearableDevice.addEventListener(
+"gattserverdisconnected",
+handleWearableDisconnected
+);
+
+
+// -----------------------------------------------------
+// CONNECT GATT
+// -----------------------------------------------------
+
+wearableServer =
+await wearableDevice.gatt.connect();
+
+
+console.log(
+"GATT connected"
+);
+
+
+// -----------------------------------------------------
+// GET SERVICE
+// -----------------------------------------------------
+
+const service =
+await wearableServer.getPrimaryService(
+WAVESHARE_SERVICE
+);
+
+
+// -----------------------------------------------------
+// GET CHARACTERISTIC
+// -----------------------------------------------------
+
+wearableCharacteristic =
+await service.getCharacteristic(
+WAVESHARE_CHARACTERISTIC
+);
+
+
+// -----------------------------------------------------
+// ENABLE NOTIFICATIONS
+// -----------------------------------------------------
+
+await wearableCharacteristic.startNotifications();
+
+
+wearableCharacteristic.addEventListener(
+"characteristicvaluechanged",
+handleWearableData
+);
+
+
+// -----------------------------------------------------
+// CONNECTED
+// -----------------------------------------------------
+
+wearableConnected =
+true;
+
+
+wearableStatus.textContent =
+"CONNECTED";
+
+
+bleBtn.textContent =
+"Wearable Connected";
+
+
+message.textContent =
+"Wearable connected";
+
+
+console.log(
+"WAVESHARE BLE CONNECTED"
+);
+
+}
+
+catch (error) {
+
+console.error(
+"BLE connection error:",
+error
+);
+
+
+wearableConnected =
+false;
+
+
+wearableStatus.textContent =
+"DISCONNECTED";
+
+
+wearableName.textContent =
+"Not connected";
+
+
+bleBtn.disabled =
+false;
+
+
+bleBtn.textContent =
+"Connect Wearable";
+
+
+message.textContent =
+"Bluetooth connection failed: " +
+error.message;
+
+}
+
+}
+
+
+// =====================================================
+// HANDLE DISCONNECT
+// =====================================================
+
+function handleWearableDisconnected() {
+
+console.log(
+"WAVESHARE BLE DISCONNECTED"
+);
+
+
+wearableConnected =
+false;
+
+
+wearableStatus.textContent =
+"DISCONNECTED";
+
+
+sensorStatus.textContent =
+"DISCONNECTED";
+
+
+wearableName.textContent =
+"Not connected";
+
+
+bleBtn.disabled =
+false;
+
+
+bleBtn.textContent =
+"Reconnect Wearable";
+
+
+message.textContent =
+"Wearable disconnected.";
+
+}
+
+
+// =====================================================
+// RECEIVE DATA
+// =====================================================
+
+function handleWearableData(event) {
+
+try {
+
+
+const value =
+event.target.value;
+
+
+const data =
+new TextDecoder().decode(
+value
+);
+
+
+console.log(
+"WAVESHARE DATA:",
+data
+);
+
+
+// Expected:
+//
+// EMG=1234;WORKOUT=PUSHUPS;SENSOR=1
+
+
+const parts =
+data.split(";");
+
+
+let receivedEMG =
+null;
+
+
+let receivedWorkout =
+null;
+
+
+let receivedSensor =
+null;
+
+
+// -----------------------------------------------------
+// PARSE DATA
+// -----------------------------------------------------
+
+for (
+const part of parts
+) {
+
+
+const separator =
+part.indexOf("=");
+
+
+if (
+separator === -1
+) {
+continue;
+}
+
+
+const key =
+part.substring(
+0,
+separator
+).trim();
+
+
+const value =
+part.substring(
+separator + 1
+).trim();
+
+
+if (
+key === "EMG"
+) {
+
+receivedEMG =
+Number(value);
+
+}
+
+
+else if (
+key === "WORKOUT"
+) {
+
+receivedWorkout =
+value;
+
+}
+
+
+else if (
+key === "SENSOR"
+) {
+
+receivedSensor =
+value;
+
+}
+
+}
+
+
+// -----------------------------------------------------
+// EMG
+// -----------------------------------------------------
+
+if (
+receivedEMG !== null &&
+!Number.isNaN(receivedEMG)
+) {
+
+
+emgRawDisplay.textContent =
+receivedEMG;
+
+
+// ESP32 ADC is normally 0–4095
+
+const emgPercent =
+Math.max(
+0,
+Math.min(
+100,
+(receivedEMG / 4095) * 100
+)
+);
+
+
+emgDisplay.textContent =
+emgPercent.toFixed(0) + "%";
+
+
+// Make available to app.js
+
+window.emgPercent =
+emgPercent;
+
+
+// Also call existing handler if present
+
+if (
+typeof window.onEMGUpdate ===
+"function"
+) {
+
+window.onEMGUpdate(
+emgPercent
+);
+
+}
+
+}
+
+
+// -----------------------------------------------------
+// WORKOUT
+// -----------------------------------------------------
+
+if (
+receivedWorkout
+) {
+
+
+const option =
+Array.from(
+workoutSelect.options
+).find(
+option =>
+option.value ===
+receivedWorkout
+);
+
+
+if (
+option
+) {
+
+
+workoutSelect.value =
+receivedWorkout;
+
+
+workoutDisplay.textContent =
+option.text;
+
+
+if (
+typeof tracker !==
+"undefined" &&
+tracker &&
+typeof tracker.setExercise ===
+"function"
+) {
+
+tracker.setExercise(
+receivedWorkout
+);
+
+}
+
+}
+
+}
+
+
+// -----------------------------------------------------
+// SENSOR STATUS
+// -----------------------------------------------------
+
+if (
+receivedSensor !== null
+) {
+
+
+if (
+receivedSensor === "1"
+) {
+
+sensorStatus.textContent =
+"CONNECTED";
+
+}
+
+else {
+
+sensorStatus.textContent =
+"DISCONNECTED";
+
+}
+
+}
+
+
+}
+
+catch (error) {
+
+console.error(
+"Error processing wearable data:",
+error
+);
+
+}
+
+}
+
+
+// =====================================================
+// MANUAL WORKOUT SELECTION
+// =====================================================
+
+workoutSelect.addEventListener(
+"change",
+function () {
+
+
+const selectedWorkout =
+this.value;
+
+
+workoutDisplay.textContent =
+this.options[
+this.selectedIndex
+].text;
+
+
+console.log(
+"Workout selected:",
+selectedWorkout
+);
+
+
+// Send selection to existing tracker
+
+if (
+typeof tracker !==
+"undefined" &&
+tracker &&
+typeof tracker.setExercise ===
+"function"
+) {
+
+tracker.setExercise(
+selectedWorkout
+);
+
+}
+
+
+// Reset rep display
+
+const repsElement =
+document.getElementById("reps");
+
+
+if (
+repsElement
+) {
+
+repsElement.textContent =
+"0";
+
+}
+
+});
+
+
+// =====================================================
+// INITIAL STATE
+// =====================================================
+
+window.emgPercent =
+0;
+
+
+sensorStatus.textContent =
+"DISCONNECTED";
+
+
+wearableStatus.textContent =
+"DISCONNECTED";
+
+
+emgDisplay.textContent =
+"0%";
+
+
+emgRawDisplay.textContent =
+"0";
+
+
+</script>
+
+
+<!-- ================================================= -->
+<!-- EXISTING APPLICATION -->
+<!-- ================================================= -->
+
+<script src="app.js"></script>
+
+
+</body>
+</html>
